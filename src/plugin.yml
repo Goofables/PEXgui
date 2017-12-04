@@ -1,0 +1,12 @@
+name: PEXgui
+version: Alpha_0.1
+author: Goofables
+main: com.gmail.goofables.PEXgui.PEXgui
+description: Graphical editor for pex
+softdepend: [PermissionsEx]
+commands:
+  pexgui:
+    description: PEXgui main command
+    usage: /<command>
+    permission: pexgui.use
+

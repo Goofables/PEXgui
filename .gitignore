@@ -1,0 +1,13 @@
+# Compiled Files
+*.jar
+*.class
+
+# Mac if i ever use it
+.DS_Store
+
+# IntelliJ
+.idea/
+*.iml
+
+# IntelliJ but not really needed
+/out
