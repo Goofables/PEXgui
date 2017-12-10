@@ -10,27 +10,26 @@ package com.gmail.goofables.PEXgui;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PEXgui extends JavaPlugin implements Listener {
+public class PEXgui extends JavaPlugin {
    private ArrayList<String> permissionList = new ArrayList<>();
    private Map<String, ArrayList<String>> permsPlugins = new HashMap<>();
    
    @Override
    public void onEnable() {
-      getServer().getPluginManager().registerEvents(this, this);
+      getServer().getPluginManager().registerEvents(new Listeners(this), this);
       Bukkit.getScheduler().runTaskLater(this, () -> {
          System.out.println("Scanning permissions.");
          for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
@@ -46,19 +45,9 @@ public class PEXgui extends JavaPlugin implements Listener {
          PermissionsEx.getPermissionManager();
          System.out.println("Scanning complete. Found " + permissionList.size() + " permissions.");
       }, 10);
+      
    }
    
-   @EventHandler
-   public void onPlayerJoin(PlayerJoinEvent e) {
-      Bukkit.getScheduler().runTaskLater(this, () -> {
-         Player player = e.getPlayer();
-         player.addAttachment(this);
-         
-         for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
-            if (!permissionList.contains(pai.getPermission())) permissionList.add(pai.getPermission());
-         }
-      }, 25);
-   }
    
    @Override
    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -79,6 +68,65 @@ public class PEXgui extends JavaPlugin implements Listener {
                   /* implementation */
                   sender.sendMessage("Error. Not setup yet.");
                   break;
+               
+               
+               case "regen":
+                  File file = new File(this.getDataFolder(), "permsList.list");
+                  FileWriter fw = null;
+                  BufferedWriter bw = null;
+                  if (!file.exists()) {
+                     try {
+                        if (file.createNewFile()) sender.sendMessage("Creating file...");
+                        else throw new IOException("Create failed");
+                     } catch (IOException e1) {
+                        sender.sendMessage("Error! Could not create file!");
+                        e1.printStackTrace();
+                        return true;
+                     }
+                  }
+                  try {
+                     sender.sendMessage("File wrote to " + file.getPath());
+                     fw = new FileWriter(file);
+                     bw = new BufferedWriter(fw);
+                     
+                     //##########################
+                     //#### Main file output ####
+                     //##########################
+                     ArrayList<String> tempPerms = (ArrayList<String>)permissionList.clone();
+                     for (String key : permsPlugins.keySet()) {
+                        bw.write("<>" + key);
+                        bw.newLine();
+                        for (String perm : permsPlugins.get(key)) {
+                           bw.write(perm);
+                           bw.newLine();
+                           if (tempPerms.contains(perm)) tempPerms.remove(perm);
+                        }
+                     }
+                     bw.write("<>Other");
+                     bw.newLine();
+                     for (String perm : tempPerms) {
+                        bw.write(perm);
+                        bw.newLine();
+                     }
+                     
+                     
+                  } catch (IOException e) {
+                     sender.sendMessage("§4Error! Could not write to file.");
+                     e.printStackTrace();
+                  } finally {
+                     try {
+                        if (bw != null) bw.close();
+                        if (fw != null) fw.close();
+                     } catch (IOException ex) {
+                        sender.sendMessage("§4Error! Could not save file.");
+                        ex.printStackTrace();
+                        return true;
+                     }
+                  }
+                  sender.sendMessage("File write finished successfully!");
+                  break;
+               
+               
             }
             return true;
       }
